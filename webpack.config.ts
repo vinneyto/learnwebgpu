@@ -36,7 +36,7 @@ export default {
   },
   output: {
     filename: debug ? '[name].js' : '[name].[chunkhash].js',
-    path: path.resolve('./dist'),
+    path: path.resolve('./docs'),
   },
   resolve: {
     extensions: ['.ts', '.js'],
