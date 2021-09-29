@@ -26,7 +26,7 @@ wrapper.appendChild(demoList);
 
 for (const demo of demos) {
   const link = document.createElement('a');
-  link.href = `/#${demo.name}`;
+  link.href = `#${demo.name}`;
   link.innerHTML = demo.name;
   link.classList.add(classes.link);
   if (demo.name === location.hash.trim().substr(1)) {
