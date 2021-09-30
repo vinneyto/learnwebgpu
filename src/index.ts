@@ -69,14 +69,3 @@ if (location.hash.trim().length !== 0) {
 window.onhashchange = () => {
   location.reload();
 };
-
-// if (window.location.pathname === '/') {
-
-// } else {
-//   const demo = demos.find((d) => `/${d.name}` === window.location.pathname);
-//   if (demo !== undefined) {
-//     demo.start();
-//   } else {
-//     document.body.innerHTML = 'unable to find demo!!!';
-//   }
-// }
