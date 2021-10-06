@@ -1,3 +1,5 @@
+import { mat4, vec3 } from 'gl-matrix';
+
 import { Context } from './Context';
 
 export async function createContext(container: HTMLElement): Promise<Context> {
@@ -52,6 +54,15 @@ export async function createContext(container: HTMLElement): Promise<Context> {
 
   const renderTargetView = renderTarget.createView();
 
+  const depthTexture = device.createTexture({
+    size: presentationSize,
+    sampleCount,
+    format: 'depth24plus',
+    usage: GPUTextureUsage.RENDER_ATTACHMENT,
+  });
+
+  const depthTextureView = depthTexture.createView();
+
   return {
     canvas,
     container,
@@ -62,6 +73,8 @@ export async function createContext(container: HTMLElement): Promise<Context> {
     presentationFormat,
     renderTarget,
     renderTargetView,
+    depthTexture,
+    depthTextureView,
     sampleCount,
     width,
     height,
@@ -83,6 +96,7 @@ export function resize(ctx: Context) {
 
   if (newWidth !== width || newHeight !== height) {
     ctx.renderTarget.destroy();
+    ctx.depthTexture.destroy();
 
     canvas.style.width = `${container.offsetWidth}px`;
     canvas.style.height = `${container.offsetHeight}px`;
@@ -109,6 +123,15 @@ export function resize(ctx: Context) {
     });
 
     ctx.renderTargetView = ctx.renderTarget.createView();
+
+    ctx.depthTexture = device.createTexture({
+      size: presentationSize,
+      sampleCount: ctx.sampleCount,
+      format: 'depth24plus',
+      usage: GPUTextureUsage.RENDER_ATTACHMENT,
+    });
+
+    ctx.depthTextureView = ctx.depthTexture.createView();
   }
 }
 
@@ -131,4 +154,25 @@ export function createBuffer(
   writeArray.set(arr);
   buffer.unmap();
   return buffer;
+}
+
+export function createProjectionMatrix(ctx: Context) {
+  const aspect = ctx.width / ctx.height;
+  const projectionMatrix = mat4.create();
+  mat4.perspective(projectionMatrix, (2 * Math.PI) / 5, aspect, 0.1, 100);
+  return projectionMatrix;
+}
+
+export function createDemoModelMatrix() {
+  const modelMatrix = mat4.create();
+  mat4.translate(modelMatrix, modelMatrix, vec3.fromValues(0, 0, -4));
+  const now = Date.now() / 1000;
+  mat4.rotate(
+    modelMatrix,
+    modelMatrix,
+    1,
+    vec3.fromValues(Math.sin(now), Math.cos(now), 0)
+  );
+
+  return modelMatrix;
 }

@@ -3,7 +3,7 @@ import fragShaderCode from './shaders/triangle.frag.wgsl';
 import { createBuffer, createContext, resize } from '../../common/helpers';
 
 export default {
-  name: 'webgpu-demo',
+  name: 'triangle',
   start: async (container: HTMLElement) => {
     const ctx = await createContext(container);
 

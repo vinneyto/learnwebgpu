@@ -1,6 +1,7 @@
 import jss from 'jss';
 import preset from 'jss-preset-default';
 import triangleDemo from './demo/01-triangle/triangle';
+import cubeDemo from './demo/02-cube/cube';
 import reset from './styles/reset';
 import { styles } from './styles/style';
 
@@ -14,7 +15,7 @@ interface Demo {
   start: (container: HTMLElement) => Promise<void>;
 }
 
-const demos: Demo[] = [triangleDemo];
+const demos: Demo[] = [triangleDemo, cubeDemo];
 
 const wrapper = document.createElement('div');
 wrapper.className = classes.wrapper;
@@ -25,14 +26,18 @@ demoList.className = classes.demoList;
 wrapper.appendChild(demoList);
 
 for (const demo of demos) {
+  const item = document.createElement('div');
+  item.classList.add(classes.demoItem);
+  demoList.appendChild(item);
+
   const link = document.createElement('a');
   link.href = `#${demo.name}`;
   link.innerHTML = demo.name;
-  link.classList.add(classes.link);
+  link.classList.add(classes.demoItemLink);
   if (demo.name === location.hash.trim().substr(1)) {
-    link.classList.add(classes.linkActive);
+    link.classList.add(classes.demoItemLinkActive);
   }
-  demoList.appendChild(link);
+  item.appendChild(link);
 }
 
 const container = document.createElement('div');
@@ -55,6 +60,7 @@ if (location.hash.trim().length !== 0) {
       err.innerHTML = (e as Error).message;
       err.className = classes.err;
       container.appendChild(err);
+      throw e;
     }
   };
 

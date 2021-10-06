@@ -28,18 +28,20 @@ export const styles = {
   container: {
     position: 'relative',
   },
-  link: {
+  demoItem: {
     display: 'block',
     padding: 16,
-    textDecoration: 'underlined',
+  },
+  demoItemLink: {
+    textDecoration: 'none',
     '&:hover': {
-      backgroundColor: '#f5f5f5',
+      textDecoration: 'underline',
     },
     '&, &:visited, &:hover, &:active': {
       color: '#089',
     },
   },
-  linkActive: {
+  demoItemLinkActive: {
     '&, &:visited, &:hover, &:active': {
       color: '#600',
     },

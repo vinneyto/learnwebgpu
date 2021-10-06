@@ -10,5 +10,7 @@ export interface Context {
   presentationFormat: GPUTextureFormat;
   renderTarget: GPUTexture;
   renderTargetView: GPUTextureView;
+  depthTexture: GPUTexture;
+  depthTextureView: GPUTextureView;
   sampleCount: number;
 }
