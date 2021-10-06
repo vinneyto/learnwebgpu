@@ -1,6 +1,6 @@
 import vertShaderCode from './shaders/triangle.vert.wgsl';
 import fragShaderCode from './shaders/triangle.frag.wgsl';
-import { createBuffer, createContext, resize } from '../../common/helpers';
+import { createBuffer, createContext, resize } from '../../engine/helpers';
 
 export default {
   name: 'triangle',

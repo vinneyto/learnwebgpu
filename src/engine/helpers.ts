@@ -163,9 +163,9 @@ export function createProjectionMatrix(ctx: Context) {
   return projectionMatrix;
 }
 
-export function createDemoModelMatrix() {
+export function createDemoModelMatrix(x = 0, y = 0) {
   const modelMatrix = mat4.create();
-  mat4.translate(modelMatrix, modelMatrix, vec3.fromValues(0, 0, -4));
+  mat4.translate(modelMatrix, modelMatrix, vec3.fromValues(x, y, -4));
   const now = Date.now() / 1000;
   mat4.rotate(
     modelMatrix,

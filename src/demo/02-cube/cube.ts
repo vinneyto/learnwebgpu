@@ -1,15 +1,16 @@
 import vertShaderCode from './shaders/cube.vert.wgsl';
 import fragShaderCode from './shaders/cube.frag.wgsl';
+import fragFlatShaderCode from './shaders/cubeFlat.frag.wgsl';
 import {
   createBuffer,
   createContext,
   createDemoModelMatrix,
   createProjectionMatrix,
   resize,
-} from '../../common/helpers';
+} from '../../engine/helpers';
 
 import { cube } from 'primitive-geometry';
-import { Context } from '../../common/Context';
+import { Context } from '../../engine/Context';
 import { mat4 } from 'gl-matrix';
 
 export default {
@@ -27,91 +28,39 @@ export default {
       GPUBufferUsage.INDEX
     );
 
-    const pipeline = ctx.device.createRenderPipeline({
-      vertex: {
-        module: ctx.device.createShaderModule({
-          code: vertShaderCode,
-        }),
-        entryPoint: 'main',
-        buffers: [
-          {
-            arrayStride: 4 * 3,
-            attributes: [
-              {
-                // position
-                shaderLocation: 0,
-                offset: 0,
-                format: 'float32x3',
-              },
-            ],
-          },
-          {
-            arrayStride: 4 * 2,
-            attributes: [
-              {
-                // uv
-                shaderLocation: 1,
-                offset: 0,
-                format: 'float32x2',
-              },
-            ],
-          },
-        ],
-      },
-      fragment: {
-        module: ctx.device.createShaderModule({
-          code: fragShaderCode,
-        }),
-        entryPoint: 'main',
-        targets: [
-          {
-            format: ctx.presentationFormat,
-          },
-        ],
-      },
-      primitive: {
-        topology: 'triangle-list',
-        cullMode: 'back',
-        frontFace: 'ccw',
-      },
-      depthStencil: {
-        depthWriteEnabled: true,
-        depthCompare: 'less',
-        format: 'depth24plus',
-      },
-      multisample: {
-        count: ctx.sampleCount,
-      },
-    });
+    const pipeline0 = createPipeline(ctx, fragShaderCode);
+    const pipeline1 = createPipeline(ctx, fragFlatShaderCode);
 
-    const uniformBuffer = ctx.device.createBuffer({
-      size: 4 * 16,
-      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-    });
+    const [uniformBuffer0, uniformBindGroup0] = createMvpUniformBuffer(
+      ctx,
+      pipeline0
+    );
 
-    const uniformBindGroup = ctx.device.createBindGroup({
-      layout: pipeline.getBindGroupLayout(0),
-      entries: [
-        {
-          binding: 0,
-          resource: {
-            buffer: uniformBuffer,
-          },
-        },
-      ],
-    });
+    const [uniformBuffer1, uniformBindGroup1] = createMvpUniformBuffer(
+      ctx,
+      pipeline1
+    );
 
     const render = () => {
       resize(ctx);
 
-      const mvp = createMVPMatrix(ctx);
+      const mvp0 = createMVPMatrix(ctx, -2);
+      const mvp1 = createMVPMatrix(ctx, 2);
 
       ctx.queue.writeBuffer(
-        uniformBuffer,
+        uniformBuffer0,
         0,
-        mvp.buffer,
-        mvp.byteOffset,
-        mvp.byteLength
+        mvp0.buffer,
+        mvp0.byteOffset,
+        mvp0.byteLength
+      );
+
+      ctx.queue.writeBuffer(
+        uniformBuffer1,
+        0,
+        mvp1.buffer,
+        mvp1.byteOffset,
+        mvp1.byteLength
       );
 
       const commandEncoder = ctx.device.createCommandEncoder();
@@ -133,12 +82,18 @@ export default {
         },
       });
 
-      passEncoder.setPipeline(pipeline);
-      passEncoder.setBindGroup(0, uniformBindGroup);
       passEncoder.setVertexBuffer(0, positionBuffer);
       passEncoder.setVertexBuffer(1, uvBuffer);
       passEncoder.setIndexBuffer(indexBuffer, 'uint16');
+
+      passEncoder.setPipeline(pipeline0);
+      passEncoder.setBindGroup(0, uniformBindGroup0);
       passEncoder.drawIndexed(cells.length);
+
+      passEncoder.setPipeline(pipeline1);
+      passEncoder.setBindGroup(0, uniformBindGroup1);
+      passEncoder.drawIndexed(cells.length);
+
       passEncoder.endPass();
 
       ctx.device.queue.submit([commandEncoder.finish()]);
@@ -150,12 +105,95 @@ export default {
   },
 };
 
-function createMVPMatrix(ctx: Context) {
+function createMVPMatrix(ctx: Context, x = 0, y = 0) {
   const projection = createProjectionMatrix(ctx);
-  const modelView = createDemoModelMatrix();
+  const modelView = createDemoModelMatrix(x, y);
 
   const mvp = mat4.create();
   mat4.multiply(mvp, projection, modelView);
 
   return mvp as Float32Array;
+}
+
+function createMvpUniformBuffer(
+  ctx: Context,
+  pipeline: GPURenderPipeline
+): [GPUBuffer, GPUBindGroup] {
+  const uniformBuffer = ctx.device.createBuffer({
+    size: 4 * 16,
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+  });
+
+  const uniformBindGroup = ctx.device.createBindGroup({
+    layout: pipeline.getBindGroupLayout(0),
+    entries: [
+      {
+        binding: 0,
+        resource: {
+          buffer: uniformBuffer,
+        },
+      },
+    ],
+  });
+
+  return [uniformBuffer, uniformBindGroup];
+}
+
+function createPipeline(ctx: Context, fragSrc: string) {
+  return ctx.device.createRenderPipeline({
+    vertex: {
+      module: ctx.device.createShaderModule({
+        code: vertShaderCode,
+      }),
+      entryPoint: 'main',
+      buffers: [
+        {
+          arrayStride: 4 * 3,
+          attributes: [
+            {
+              // position
+              shaderLocation: 0,
+              offset: 0,
+              format: 'float32x3',
+            },
+          ],
+        },
+        {
+          arrayStride: 4 * 2,
+          attributes: [
+            {
+              // uv
+              shaderLocation: 1,
+              offset: 0,
+              format: 'float32x2',
+            },
+          ],
+        },
+      ],
+    },
+    fragment: {
+      module: ctx.device.createShaderModule({
+        code: fragSrc,
+      }),
+      entryPoint: 'main',
+      targets: [
+        {
+          format: ctx.presentationFormat,
+        },
+      ],
+    },
+    primitive: {
+      topology: 'triangle-list',
+      cullMode: 'back',
+      frontFace: 'ccw',
+    },
+    depthStencil: {
+      depthWriteEnabled: true,
+      depthCompare: 'less',
+      format: 'depth24plus',
+    },
+    multisample: {
+      count: ctx.sampleCount,
+    },
+  });
 }
